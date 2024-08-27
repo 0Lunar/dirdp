@@ -3,7 +3,7 @@ import os
 import sys
 import time
 import random
-from threading import Thread
+import threading
 
 
 GREEN = "\x1b[1;32m"
@@ -38,6 +38,7 @@ CgggbU8OU qOp qOdoUOdcb          ____/ (_)_______/ /___
 
 max_threads = 0
 threads = 0
+event = threading.Event()
 
 
 def clean():
@@ -54,7 +55,7 @@ def banner():
 
 def checkArgs():
     if len(sys.argv) != 4:
-        print("\n" + ERROR + "Usage: python3 dirdp.py url worlist threads")
+        print("\n" + ERROR + "Usage: python3 dirdp.py url worlist threads\n\nif you want max threads, set 0 to threads arg")
         sys.exit()
 
 
@@ -100,14 +101,15 @@ def fuzzUrl():
 
     while word != "":
 
-        while threads == max_threads:
-            pass
-
         if word.startswith("#") == False and word != "\n":
 
-            Thread(target=find, args=(word, url, http,)).start()
+            threading.Thread(target=find, args=(word, url, http,)).start()
             
             threads += 1
+
+            if threads == max_threads:
+                event.wait()
+                event.clear()
 
         word = wordlist.readline()
     
@@ -135,6 +137,7 @@ def find(word, url, http: urllib3.PoolManager):
         pass
 
     threads -= 1
+    event.set()
 
 
 if __name__ == "__main__":
